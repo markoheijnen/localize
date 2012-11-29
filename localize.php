@@ -131,36 +131,16 @@ class Localize {
      * @return String, the name of the updated locale
      */
     function update_mo() {
-        $repo = 'http://translate.wordpress.org/projects/wp/%s/%s/default/export-translations?format=mo';
-        $languages_dir = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'languages' . DIRECTORY_SEPARATOR;
         $settings = self::get_locale();
-        $po_path = $languages_dir . $settings['lang'] . '.mo';
-        
-        if( !is_dir( $languages_dir ) )
-            @mkdir( $languages_dir, 0755, true );
-        
+       
         $versions = self::get_versions();
-        if( !is_array( $versions ) )
+        if( ! is_array( $versions ) )
             return;
         
-        if( !in_array( $settings['lang_version'], $versions ) )
+        if( ! in_array( $settings['lang_version'], $versions ) )
             return;
-        
-        $locale = self::get_locale_data( $settings['lang'], $settings['lang_version'] );
-        if( !is_array( $locale ) )
-            return;
-        
-        $po_uri = sprintf( $repo, $settings['lang_version'], $locale[1] );
-        $tmp_po = download_url( $po_uri );
-        
-        if ( is_wp_error($tmp_po) ) {
-            @unlink( $tmp_po );
-            return false;
-        }
-        
-        if( @copy( $tmp_po, $po_path ))
-            if( @unlink( $tmp_po ) )
-                return $locale[0];
+
+        return GlotPress_API::download_translation( $settings['lang_version'], $settings['lang'] );
     }
     
     /**
@@ -182,37 +162,6 @@ class Localize {
         
         set_transient( "localize_versions", $versions, LOCALIZE_CACHE );
         return $versions;
-    }
-    
-    /**
-     * get_locale_data( $locale, $version )
-     *
-     * Extracts the locale data from GlotPress api
-     * @param String $locale, the locale you want to get data about. Ex.: ru_RU
-     * @param String $version, the GlotPress version slug
-     * @return Mixed, an array of `name -> locale_slug` format
-     */
-    function get_locale_data( $locale, $version ) {
-        $locales_info = get_transient( "localize_locale_data" );
-
-        if( empty( $locales_info ) ) {
-            $locales_info = GlotPress_API::locales( $version );
-
-            if( is_object( $locales_info ) && isset( $locales_info->translation_sets ) )
-                set_transient( "localize_locale_data", $locales_info, LOCALIZE_CACHE );
-            else
-                $locales_info = false;
-        }
-
-        if( $locales_info ) {
-            foreach( $locales_info->translation_sets as $t ) {
-                if( strstr( $locale, $t->locale ) ) {
-                    return array( $t->name, $t->locale);
-                }
-            }
-        }
-
-        return false;
     }
     
     /**
