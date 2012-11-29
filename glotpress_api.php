@@ -16,11 +16,31 @@ class GlotPress_API {
 
 
 	static public function versions() {
-		return self::fetch();
+		$versions = get_transient( "localize_versions" );
+
+		if( ! empty( $versions ) )
+			return $versions;
+
+		$data = self::fetch();
+
+		if( is_object( $data ) && isset( $data->sub_projects ) )
+			set_transient( "localize_versions", $data, self::$cache );
+
+		return $data;
 	}
 
 	static public function locales( $version ) {
-		return self::fetch( $version );
+		$versions = get_transient( "localize_locale_data" );
+
+		if( ! empty( $versions ) )
+			return $versions;
+
+		$data = self::fetch( $version );
+
+		if( is_object( $data ) && isset( $data->sub_projects ) )
+			set_transient( "localize_locale_data", $data, self::$cache );
+
+		return $data;
 	}
 
 	/**
@@ -32,16 +52,7 @@ class GlotPress_API {
 	 * @return Mixed, an array of `name -> locale_slug` format
 	 */
 	static public function get_locale( $locale, $version ) {
-		$locales_info = get_transient( "localize_locale_data" );
-
-		if( empty( $locales_info ) ) {
-			$locales_info = self::locales( $version );
-
-			if( is_object( $locales_info ) && isset( $locales_info->translation_sets ) )
-				set_transient( "localize_locale_data", $locales_info, self::$cache );
-			else
-				$locales_info = false;
-		}
+		$locales_info = self::locales( $version );
 
 		if( $locales_info ) {
 			foreach( $locales_info->translation_sets as $t ) {
@@ -96,7 +107,7 @@ class GlotPress_API {
 	 */
 	private function fetch( $args = '' ) {
 		global $wp_version;
-		
+
 		$api = self::$url . "/api/projects/" . self::$project . DIRECTORY_SEPARATOR;
 		$request = new WP_Http;
 		
