@@ -26,7 +26,6 @@ Author URI: http://stas.nerd.ro/
 */
 
 define( 'LOCALIZE', '0.4' );
-define( 'LOCALIZE_CACHE', '360' );
 
 include 'glotpress_api.php';
 include 'list-table.php';
@@ -158,17 +157,13 @@ class Localize {
 	 * @return Mixed, an array of `name -> slug` versions
 	 */
 	function get_versions() {
-		$versions = get_transient( "localize_versions" );
-
-		if( !empty( $versions ) )
-			return $versions;
-
+		$versions  = false;
 		$repo_info = GlotPress_API::versions();
-		if( is_object( $repo_info ) && isset( $repo_info->sub_projects ) )
+
+		if( $repo_info )
 			foreach( $repo_info->sub_projects as $p )
 				$versions[$p->name] = $p->slug;
 
-		set_transient( "localize_versions", $versions, LOCALIZE_CACHE );
 		return $versions;
 	}
 
