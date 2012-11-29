@@ -26,7 +26,14 @@ class Localize_List_Table extends WP_List_Table {
 			case 'title':
 				return $item->name;
 			case 'description':
-				return '';
+				$languages_dir = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'languages' . DIRECTORY_SEPARATOR;
+
+				$path = $languages_dir . $item->locale . '.mo';
+				
+				if( is_file( $path ) )
+					return __( 'Has translation', 'localize' );
+				else
+					return __( 'No translation', 'localize' );
 		}
 	}
 
@@ -42,8 +49,7 @@ class Localize_List_Table extends WP_List_Table {
 		$columns = array(
 			'cb'          => '<input type="checkbox" />', //Render a checkbox instead of text
 			'title'       => __('Languages'),
-			'description' => __('Description'),
-			'actions' => __('Actions')
+			'description' => __('Installed')
 		);
 
 		return $columns;
