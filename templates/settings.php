@@ -19,6 +19,14 @@
                 </p>
             </div>
         </div>
+
+        <form id="plugin-filter" method="post">
+            <?php
+                echo '<input type="hidden" name="page" value="'. $_REQUEST[ 'page' ] .'" />';
+                $list_table->prepare_items();
+                $list_table->display();
+            ?>
+        </form>
         
         <div class="postbox">
             <h3 class="hndle" ><?php _e( 'Options','localize' )?></h3>

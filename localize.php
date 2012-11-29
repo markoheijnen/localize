@@ -29,6 +29,7 @@ define( 'LOCALIZE', '0.4' );
 define( 'LOCALIZE_CACHE', '360' );
 
 include 'glotpress_api.php';
+include 'list-table.php';
 
 class Localize {
 	/**
@@ -107,6 +108,14 @@ class Localize {
 		$vars = self::get_locale();
 		$vars['versions'] = self::get_versions();
 		$vars['flash'] = $flash;
+
+		$vars['list_table'] = new Localize_List_Table();
+
+		$data = GlotPress_API::locales( 'dev' );
+
+		if( isset( $data->translation_sets ) )
+			$vars['list_table']->setData( $data->translation_sets );
+
 		self::render( 'settings', $vars );
 	}
 	
