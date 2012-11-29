@@ -1,7 +1,17 @@
 <?php
 
 class GlotPress_API {
-	private static $default = 'http://translate.wordpress.org';
+	private static $url = 'http://translate.wordpress.org';
+	private static $project = 'wp';
+
+	public function __construct( $url = false, $project = false ) {
+		if( $url )
+			$this->url = $url;
+
+		if( $project )
+			$this->project = $project;
+	}
+
 
 	static public function versions() {
 		return self::fetch();
@@ -21,7 +31,7 @@ class GlotPress_API {
     private function fetch( $args = '' ) {
         global $wp_version;
         
-        $api = self::$default . "/api/projects/wp/";
+        $api = self::$url . "/api/projects/" . self::$project . DIRECTORY_SEPARATOR;
         $request = new WP_Http;
         
         $request_args = array(
