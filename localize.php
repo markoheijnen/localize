@@ -29,6 +29,8 @@ Author URI: http://stas.nerd.ro/
 define( 'LOCALIZE', '0.4' );
 define( 'LOCALIZE_CACHE', '360' );
 
+include 'glotpress_api.php';
+
 class Localize {
     /**
      * init()
@@ -162,30 +164,6 @@ class Localize {
     }
     
     /**
-     * fetch_glotpress()
-     *
-     * Uses GlotPress api to get the repository details
-     * @return Mixed, decoded json from api, or false on failure
-     */
-    function fetch_glotpress( $args = '' ) {
-        global $wp_version;
-        
-        $api = "http://translate.wordpress.org/api/projects/wp/";
-        $request = new WP_Http;
-        
-        $request_args = array(
-            'timeout' => 30,
-            'user-agent' => 'WordPress/' . $wp_version . '; Localize/' . LOCALIZE . '; ' . get_bloginfo( 'url' )
-        );
-        
-        $response = $request->request( $api . $args, $request_args);
-        if( !is_wp_error( $response ) )
-            return json_decode( $response['body'] );
-        else
-            return;
-    }
-    
-    /**
      * get_versions()
      *
      * Extracts the repository versions from GlotPress api
@@ -197,8 +175,8 @@ class Localize {
         if( !empty( $versions ) )
             return $versions;
         
-        $repo_info = self::fetch_glotpress();
-        if( is_object( $repo_info ) && isset( $repo_info->sub_projects ))
+        $repo_info = GlotPress_API::versions();
+        if( is_object( $repo_info ) && isset( $repo_info->sub_projects ) )
             foreach( $repo_info->sub_projects as $p )
                 $versions[$p->name] = $p->slug;
         
@@ -220,7 +198,7 @@ class Localize {
         if( !empty( $locales_info ) )
             return $locales_info;
         
-        $locales_info = self::fetch_glotpress( $version );
+        $locales_info = GlotPress_API::locale( $version );
         if( is_object( $locales_info ) && isset( $locales_info->translation_sets ))
             foreach( $locales_info->translation_sets as $t )
                 if( strstr( $locale, $t->locale ) ) {
