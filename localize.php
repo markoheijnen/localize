@@ -194,19 +194,25 @@ class Localize {
      */
     function get_locale_data( $locale, $version ) {
         $locales_info = get_transient( "localize_locale_data" );
-        
-        if( !empty( $locales_info ) )
-            return $locales_info;
-        
-        $locales_info = GlotPress_API::locale( $version );
-        if( is_object( $locales_info ) && isset( $locales_info->translation_sets ))
-            foreach( $locales_info->translation_sets as $t )
+
+        if( empty( $locales_info ) ) {
+            $locales_info = GlotPress_API::locales( $version );
+
+            if( is_object( $locales_info ) && isset( $locales_info->translation_sets ) )
+                set_transient( "localize_locale_data", $locales_info, LOCALIZE_CACHE );
+            else
+                $locales_info = false;
+        }
+
+        if( $locales_info ) {
+            foreach( $locales_info->translation_sets as $t ) {
                 if( strstr( $locale, $t->locale ) ) {
-                    set_transient( "localize_locale_data", array( $t->name, $t->locale), LOCALIZE_CACHE );
                     return array( $t->name, $t->locale);
                 }
-        
-        return;
+            }
+        }
+
+        return false;
     }
     
     /**
