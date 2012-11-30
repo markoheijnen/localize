@@ -56,17 +56,40 @@ class Localize {
 	 * Adds the options page to existing menu
 	 */
 	function page() {
-		add_options_page(
+		$page = add_options_page(
 			__( 'Localization', 'localize' ),
 			__( 'Localization', 'localize' ),
 			'administrator',
 			'localize',
 			array( __CLASS__, 'page_body' )
 		);
+
+		add_action( 'load-' . $page, array( __CLASS__, 'help_tab' ) );
 	}
 
 	/**
-	 * page()
+	 * help_tab()
+	 * 
+	 * Adds a help tab to the options page
+	 */
+	function help_tab() {
+		$content  = '<p>' . __( 'This plugin will help you enable localization for your language on this WordPress installation.','localize' ) . '</p>';
+		$content .= '<p>' . __( 'All you need to do is select the language code from the list below, and the version you want to use.','localize' ) . '</p>';
+		$content .= '<p>' . __( 'The <strong>stable version</strong> will load the file from already published translations.','localize' ) . '</p>';
+		$content .= '<p>' . __( 'The <strong>development version</strong> will try to download the file directly from ','localize' );
+		$content .= '<a href="http://translate.wordpress.org/">GlotPress (translate.wordpress.org)</a>.</p>';
+
+
+		$screen = get_current_screen();
+		$screen->add_help_tab( array(
+			'id'      => 'help-introduction',
+			'title'   => __( 'Introduction','localize' ),
+			'content' => $content,
+		) );
+	}
+
+	/**
+	 * page_body()
 	 * 
 	 * Callback to render the options page and handle it's form
 	 */

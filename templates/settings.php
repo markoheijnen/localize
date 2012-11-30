@@ -7,18 +7,6 @@
 <div class="wrap">
     <h2><?php _e( 'Localize WordPress','localize' ); ?></h2>
     <div id="poststuff" class="metabox-holder">
-        <div class="postbox">
-            <h3 class="hndle" ><?php _e( 'Introduction','localize' )?></h3>
-            <div class="inside">
-                <p><?php _e( 'This plugin will help you enable localization for your language on this WordPress installation.','localize' ); ?></p>
-                <p><?php _e( 'All you need to do is select the language code from the list below, and the version you want to use.','localize' ); ?></p>
-                <p><?php _e( 'The <strong>stable version</strong> will load the file from already published translations.','localize' ); ?></p>
-                <p>
-                    <?php _e( 'The <strong>development version</strong> will try to download the file directly from ','localize' ); ?>
-                    <a href="http://translate.wordpress.org/">GlotPress (translate.wordpress.org)</a>.
-                </p>
-            </div>
-        </div>
 
         <form id="plugin-filter" method="post">
             <?php
