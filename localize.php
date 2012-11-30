@@ -127,8 +127,7 @@ class Localize {
 				$flash = sprintf( __( '%s localization updated! Please reload this page...', 'localize' ), $locale );
 		}
 
-		$vars = self::get_locale();
-		$vars['versions'] = self::get_versions();
+		$vars = array();
 		$vars['flash'] = $flash;
 
 		$vars['list_table'] = new Localize_List_Table();
@@ -140,42 +139,10 @@ class Localize {
 
 		self::render( 'settings', $vars );
 	}
-	
-	/**
-	 * get_locale()
-	 *
-	 * Fetches the current options for custom locale
-	 * @return Mixed, an array of options as keys
-	 */
-	function get_locale() {
-		return array(
-			'lang' => get_option( 'localize_lang', get_locale() ),
-			'lang_version' => get_option( 'localize_lang_version', 'stable' )
-		);
-	}
 
-	/**
-	 * update_mo()
-	 *
-	 * Updates the po file from WordPress.org GlotPress repo
-	 * @return String, the name of the updated locale
-	 */
-	function update_mo() {
-		$settings = self::get_locale();	 
-		$versions = self::get_versions();
-
-		if( ! is_array( $versions ) )
-			return;
-
-		if( ! in_array( $settings['lang_version'], $versions ) )
-			return;
-
-		return GlotPress_API::download_translation( $settings['lang_version'], $settings['lang'] );
-	}
-	
 	/**
 	 * get_versions()
-	 *
+	 * 
 	 * Extracts the repository versions from GlotPress api
 	 * @return Mixed, an array of `name -> slug` versions
 	 */
@@ -196,16 +163,13 @@ class Localize {
 	 * Updates the `wp-config.php` file using new locale
 	 * @return Boolean, false on failre and true on success
 	 */
-	function update_config() {
+	function update_config( $locale ) {
 		$wp_config_path = ABSPATH . 'wp-config.php';
 		$wpc_h = fopen( $wp_config_path, "r+" );
 
 		$content = stream_get_contents( $wpc_h );
 		if( ! $content && ! flock( $wpc_h, LOCK_EX ) )
 			return false;
-
-		$settings = self::get_locale();
-		$locale = $settings['lang'];
 
 		$source = "/define(.*)WPLANG(.*)\'(.*)\'(.*);(.*)/";
 		$target = "define ('WPLANG', '$locale'); // Updated by `Localize` plugin";
