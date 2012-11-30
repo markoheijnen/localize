@@ -89,8 +89,8 @@ class Localize_List_Table extends WP_List_Table {
 
 	function get_bulk_actions() {
 		$actions = array(
-			'activate' => 'Activate',
-			'deactivate' => 'Deactivate'
+			'download' => __( 'Download' ),
+			'delete' => __( 'Delete' )
 		);
 		return $actions;
 	}
