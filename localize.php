@@ -68,14 +68,18 @@ class Localize {
 				$views[ self::$list_table->get_current_view() ][3]
 			);
 
-			if(  is_super_admin() && ! empty( $_GET['locale'] ) ) {
-				$locale = esc_attr( $_GET['locale'] );
-				$glotpress->download_translation( 'dev', $locale );
+			if( is_super_admin() && isset( $_GET['action'] ) ) {
+				if( 'default' == $_GET['action'] && ! empty( $_GET['locale'] ) ) {
+					$locale = esc_attr( $_GET['locale'] );
 
-				if( ! self::update_config( $locale ) )
-					self::$error_message = __( "Sorry, the <code>wp-config.php</code> could not be updated...", 'localize' );
-				else
-					self::$error_message = sprintf( __( '%s localization updated!', 'localize' ), esc_attr( $_GET['locale'] ) );
+					if( ! $glotpress->download_translation( 'dev', $locale ) ) {
+						self::$error_message = __( 'There was an error downloading the file!', 'localize' );
+					}
+					else if( ! self::update_config( $locale ) )
+						self::$error_message = __( "Sorry, the <code>wp-config.php</code> could not be updated...", 'localize' );
+					else
+						self::$error_message = sprintf( __( '%s localization updated!', 'localize' ), esc_attr( $_GET['locale'] ) );
+				}
 			}
 
 			$data = $glotpress->locales( 'dev' );
