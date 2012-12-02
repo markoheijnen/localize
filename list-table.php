@@ -25,6 +25,8 @@ class Localize_List_Table extends WP_List_Table {
 		switch( $column_name ) {
 			case 'title':
 				return $item->name;
+			case 'locale':
+				return glotpess_get_local( $item->locale );
 			case 'description':
 				$languages_dir = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'languages' . DIRECTORY_SEPARATOR;
 
@@ -49,6 +51,7 @@ class Localize_List_Table extends WP_List_Table {
 		$columns = array(
 			'cb'          => '<input type="checkbox" />', //Render a checkbox instead of text
 			'title'       => __('Languages'),
+			'locale'      => __('Locale'),
 			'description' => __('Installed')
 		);
 
@@ -57,8 +60,8 @@ class Localize_List_Table extends WP_List_Table {
 
 	function get_sortable_columns() {
 		$sortable_columns = array(
-			'title'       => array( 'title', true ),     //true means its already sorted
-			'description' => array( 'description', false )
+			'title'  => array( 'name', true ),     //true means its already sorted
+			'locale' => array( 'locale', false )
 		);
 		return $sortable_columns;
 	}
