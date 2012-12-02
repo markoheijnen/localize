@@ -31,6 +31,9 @@ include 'glotpress_api.php';
 include 'list-table.php';
 
 class Localize {
+	static private $list_table;
+	static private $error_message;
+
 	/**
 	 * init()
 	 * 
@@ -38,7 +41,47 @@ class Localize {
 	 */
 	function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'page' ) );
-		add_action( 'init', array( __CLASS__, 'localization' ) );
+		add_action( 'admin_init', array( __CLASS__, 'localization' ) );
+
+		add_action( 'current_screen', array( __CLASS__, 'current_screen' ) );
+	}
+
+	function current_screen( $screen ) {
+		if( 'settings_page_localize' == $screen->base ) {
+			self::$list_table = new Localize_List_Table();
+
+			$views = array(
+				'wordpress' => array( 'WordPress', 'http://translate.wordpress.org', 'wp', false ),
+				'wordpress-cc' => array( 'Continents-cities', 'http://translate.wordpress.org', 'wp', 'cc' ),
+				'wordpress-admin' => array( 'WordPress Admin', 'http://translate.wordpress.org', 'wp', 'admin' )
+			);
+
+			if( is_multisite() ) {
+				$views['wordpress-network'] = array( 'WordPress Network Admin ', 'http://translate.wordpress.org', 'wp', 'admin/network' );
+			}
+
+			self::$list_table->set_views( $views );
+
+			$glotpress = new GlotPress_API(
+				$views[ self::$list_table->get_current_view() ][1],
+				$views[ self::$list_table->get_current_view() ][2],
+				$views[ self::$list_table->get_current_view() ][3]
+			);
+
+			if(  is_super_admin() && ! empty( $_GET['locale'] ) ) {
+				$locale = esc_attr( $_GET['locale'] );
+				$glotpress->download_translation( 'dev', $locale );
+
+				if( ! self::update_config( $locale ) )
+					self::$error_message = __( "Sorry, the <code>wp-config.php</code> could not be updated...", 'localize' );
+				else
+					self::$error_message = sprintf( __( '%s localization updated!', 'localize' ), esc_attr( $_GET['locale'] ) );
+			}
+
+			$data = $glotpress->locales( 'dev' );
+			if( isset( $data->translation_sets ) )
+				self::$list_table->setData( $data->translation_sets );
+		}
 	}
 
 	/**
@@ -94,49 +137,9 @@ class Localize {
 	 * Callback to render the options page and handle it's form
 	 */
 	function page_body() {
-		$flash = null;
-
-		if( isset( $_POST['localize_nonce'] ) && wp_verify_nonce( $_POST['localize_nonce'], 'localize' ) ) {
-			$lang = null;
-			$lang_version = null;
-			$locale = null;
-
-			if( isset( $_POST['lang'] ) && !empty( $_POST['lang'] ) )
-				$lang = sanitize_text_field( $_POST['lang'] );
-
-			if( isset( $_POST['lang_version'] ) && !empty( $_POST['lang_version'] ) )
-				$lang_version = sanitize_text_field( $_POST['lang_version'] );
-
-			if( $lang && strstr( $lang, '_' ) )
-				update_option( 'localize_lang', $lang );
-
-			if( $lang_version )
-				update_option( 'localize_lang_version', $lang_version );
-
-			if( !self::update_config() )
-				$flash = __( "Sorry, the <code>wp-config.php</code> could not be updated...", 'localize' );
-
-			if( $lang != 'en_US' )
-				$locale = self::update_mo();
-			else
-				$locale = "English";
-
-			if( !$locale )
-				$flash = __( 'There was an error downloading the file!','localize' );
-			else
-				$flash = sprintf( __( '%s localization updated! Please reload this page...', 'localize' ), $locale );
-		}
-
 		$vars = array();
-		$vars['flash'] = $flash;
-
-		$vars['list_table'] = new Localize_List_Table();
-
-		$data = GlotPress_API::locales( 'dev' );
-
-		if( isset( $data->translation_sets ) )
-			$vars['list_table']->setData( $data->translation_sets );
-
+		$vars['flash'] = self::$error_message;
+		$vars['list_table'] = self::$list_table;
 		self::render( 'settings', $vars );
 	}
 

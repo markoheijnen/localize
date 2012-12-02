@@ -7,6 +7,7 @@
 <div class="wrap">
     <h2><?php _e( 'Localize WordPress','localize' ); ?></h2>
     <div id="poststuff" class="metabox-holder">
+        <?php $list_table->views(); ?>
 
         <form id="plugin-filter" method="post">
             <?php

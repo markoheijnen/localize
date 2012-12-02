@@ -5,6 +5,8 @@ if( ! class_exists('WP_List_Table') )
 
 class Localize_List_Table extends WP_List_Table {
 	private $locales;
+	private $_views;
+	private $current_view;
 
 	function __construct() {
 		global $status, $page;
@@ -19,6 +21,36 @@ class Localize_List_Table extends WP_List_Table {
 
 	public function setData( $data ) {
 		$this->locales = (array) $data;
+	}
+
+	function set_views( $data ) {
+		$views = array();
+
+		$this->current_view = key( $data );
+
+		if( isset( $_GET['localize_key'], $data[ $_GET['localize_key'] ] ) )
+			$this->current_view = esc_attr( $_GET['localize_key'] );
+
+		$url = remove_query_arg( array( 'localize_key', 'locale', 'action' ) );
+		foreach( $data as $key => $value ) {
+			$class = '';
+
+			if( $this->current_view == $key ) {
+				$class = ' class="current"';
+			}
+
+			$views[ $key ] = '<a href="' . add_query_arg( 'localize_key', $key, $url ) . '"' . $class . '>' . $value['0'] . '</a>';
+		}
+
+		$this->_views = $views;
+	}
+
+	function get_views() {
+		return $this->_views;
+	}
+
+	function get_current_view() {
+		return $this->current_view;
 	}
 
 	function column_default( $item, $column_name ){
@@ -69,7 +101,11 @@ class Localize_List_Table extends WP_List_Table {
 
 
 	function column_title($item){
-		$actions = null;
+		$actions = array();
+
+		if( is_super_admin() && 'wordpress' == $this->current_view )
+			$actions['default'] = sprintf( '<a href="?page=%s&action=default&locale=%s">%s</a>', $_REQUEST['page'], glotpess_get_local( $item->locale ), __( 'Make default', 'localize' ) );
+
 		//Build row actions
 		/*
 		if( $item['activated'] == true ) {

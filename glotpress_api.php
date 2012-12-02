@@ -3,42 +3,48 @@
 class GlotPress_API {
 	public static $cache = 360;
 
-	private static $url = 'http://translate.wordpress.org';
-	private static $project = 'wp';
+	public $url = 'http://translate.wordpress.org';
+	public $project = 'wp';
+	public $subproject = '';
 
-	public function __construct( $url = false, $project = false ) {
+	public function __construct( $url = false, $project = false, $subproject = false ) {
 		if( $url )
 			$this->url = $url;
 
 		if( $project )
 			$this->project = $project;
+
+		if( $subproject )
+			$this->subproject = $subproject;
 	}
 
 
-	static public function versions() {
-		$versions = get_transient( "localize_versions" );
+	public function versions() {
+		$hash = "localize_" . $this->get_hash();
+		$versions = get_transient( $hash );
 
 		if( ! empty( $versions ) )
 			return $versions;
 
-		$data = self::fetch();
+		$data = $this->fetch();
 
 		if( is_object( $data ) && isset( $data->sub_projects ) )
-			set_transient( "localize_versions", $data, self::$cache );
+			set_transient( $hash, $data, self::$cache );
 
 		return $data;
 	}
 
-	static public function locales( $version ) {
-		$versions = get_transient( "localize_locale_data" );
+	public function locales( $version ) {
+		$hash = "localize_" . $this->get_hash( $version );
+		$versions = get_transient( $hash );
 
 		if( ! empty( $versions ) )
 			return $versions;
 
-		$data = self::fetch( $version );
+		$data = $this->fetch( $version );
 
 		if( is_object( $data ) && isset( $data->sub_projects ) )
-			set_transient( "localize_locale_data", $data, self::$cache );
+			set_transient( $hash, $data, self::$cache );
 
 		return $data;
 	}
@@ -51,8 +57,8 @@ class GlotPress_API {
 	 * @param String $version, the GlotPress version slug
 	 * @return Mixed, an array of `name -> locale_slug` format
 	 */
-	static public function get_locale( $locale, $version ) {
-		$locales_info = self::locales( $version );
+	public function get_locale( $locale, $version ) {
+		$locales_info = $this->locales( $version );
 
 		if( $locales_info ) {
 			foreach( $locales_info->translation_sets as $t ) {
@@ -73,7 +79,7 @@ class GlotPress_API {
 	 * @return String, the name of the updated locale
 	 */
 	function download_translation( $version, $language, $format = 'mo' ) {
-		$repo = self::$url . '/projects/%s/%s/%s/default/export-translations?format=%s';
+		$repo = $this->url . '/projects/%s/%s/%s/default/export-translations?format=%s';
 		$languages_dir = WP_CONTENT_DIR . DIRECTORY_SEPARATOR . 'languages' . DIRECTORY_SEPARATOR;
 
 		$path = $languages_dir . $language . '.' . $format;
@@ -81,11 +87,11 @@ class GlotPress_API {
 		if( ! is_dir( $languages_dir ) )
 			@mkdir( $languages_dir, 0755, true );
 
-		$locale = self::get_locale( $language, $version );
+		$locale = $this->get_locale( $language, $version );
 		if( ! is_array( $locale ) )
 			return;
 		
-		$file_uri = sprintf( $repo, self::$project, $version, $locale[1], $format );
+		$file_uri = sprintf( $repo, $this->project, $version, $locale[1], $format );
 		$tmp_path = download_url( $file_uri );
 
 		if ( is_wp_error( $tmp_path ) ) {
@@ -108,7 +114,7 @@ class GlotPress_API {
 	private function fetch( $args = '' ) {
 		global $wp_version;
 
-		$api = self::$url . "/api/projects/" . self::$project . DIRECTORY_SEPARATOR;
+		$api = $this->get_url( $args );
 		$request = new WP_Http;
 		
 		$request_args = array(
@@ -116,12 +122,25 @@ class GlotPress_API {
 			'user-agent' => 'WordPress/' . $wp_version . '; Localize/' . LOCALIZE . '; ' . get_bloginfo( 'url' )
 		);
 		
-		$response = $request->request( $api . $args, $request_args);
+		$response = $request->request( $api, $request_args );
 
 		if( ! is_wp_error( $response ) )
 			return json_decode( $response['body'] );
 		else
 			return false;
+	}
+
+	private function get_hash( $args = '' ) {
+		return md5( $this->get_url( $args ) );
+	}
+
+	private function get_url( $args = '' ) {
+		$url = $this->url . "/api/projects/" . $this->project . DIRECTORY_SEPARATOR . $args;
+
+		if( $this->subproject )
+			$url .= DIRECTORY_SEPARATOR . $this->subproject;
+
+		return $url;
 	}
 }
 
